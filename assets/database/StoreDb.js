@@ -1,5 +1,5 @@
-const { isJidGroup } = require("baileys");
-const config = require("../../config");
+const { isJidGroup } = require("@whiskeysockets/baileys");
+const config = require("../config");
 const { DataTypes } = require("sequelize");
 
 const chatDb = config.DATABASE.define("Chat", {
@@ -47,19 +47,26 @@ const contactDb = config.DATABASE.define("contact", {
 
 const saveContact = async (jid, name) => {
   try {
-    if (!jid || !name) return;
+    if (!jid || !name) {
+      console.log("Invalid JID or name:", { jid, name });
+      return;
+    }
     if (isJidGroup(jid)) return;
+
     const exists = await contactDb.findOne({ where: { jid } });
     if (exists) {
       if (exists.name === name) {
+        console.log("Contact already exists with the same name:", name);
         return;
       }
-      return await contactDb.update({ name }, { where: { jid } });
+      await contactDb.update({ name }, { where: { jid } });
+      console.log("Updated contact:", { jid, name });
     } else {
-      return await contactDb.create({ jid, name });
+      await contactDb.create({ jid, name });
+      console.log("Created new contact:", { jid, name });
     }
   } catch (e) {
-    console.log(e);
+    console.log("Error in saveContact:", e);
   }
 };
 
@@ -68,53 +75,88 @@ const saveMessage = async (message, user) => {
     const jid = message.key.remoteJid;
     const id = message.key.id;
     const msg = message;
-    if (!id || !jid || !msg) return;
+
+    console.log("Saving message with JID:", jid, "and ID:", id);
+
+    if (!id || !jid || !msg) {
+      console.log("Invalid message data:", { id, jid, msg });
+      return;
+    }
+
     await saveContact(user, message.pushName);
+    
     let exists = await messageDb.findOne({ where: { id, jid } });
     if (exists) {
-      return await messageDb.update({ message: msg }, { where: { id, jid } });
+      await messageDb.update({ message: msg }, { where: { id, jid } });
+      console.log("Updated message:", { id, jid });
     } else {
-      return await messageDb.create({ id, jid, message: msg });
+      await messageDb.create({ id, jid, message: msg });
+      console.log("Created new message:", { id, jid });
     }
   } catch (e) {
-    console.log(e);
+    console.log("Error in saveMessage:", e);
   }
 };
 
 const loadMessage = async (id) => {
-  if (!id) return;
+  if (!id) {
+    console.log("Invalid message ID:", id);
+    return false;
+  }
   const message = await messageDb.findOne({
     where: { id },
   });
-  if (message) return message.dataValues;
+  if (message) {
+    console.log("Loaded message:", message.dataValues);
+    return message.dataValues;
+  }
+  console.log("Message not found for ID:", id);
   return false;
 };
 
 const saveChat = async (chat) => {
-  if (chat.id === "status@broadcast") return;
-  if (chat.id === "broadcast") return;
+  if (chat.id === "status@broadcast" || chat.id === "broadcast") return;
+  if (!chat.id || !chat.conversationTimestamp) {
+    console.log("Invalid chat data:", chat);
+    return;
+  }
+
   let isGroup = isJidGroup(chat.id);
-  if (!chat.id || !chat.conversationTimestamp) return;
+  console.log("Saving chat with ID:", chat.id, "and timestamp:", chat.conversationTimestamp);
+
   let chatexists = await chatDb.findOne({ where: { id: chat.id } });
   if (chatexists) {
-    return await chatDb.update(
+    await chatDb.update(
       { conversationTimestamp: chat.conversationTimestamp },
       { where: { id: chat.id } }
     );
+    console.log("Updated chat:", { id: chat.id });
   } else {
-    return await chatDb.create({
+    await chatDb.create({
       id: chat.id,
       conversationTimestamp: chat.conversationTimestamp,
       isGroup,
     });
+    console.log("Created new chat:", { id: chat.id });
   }
 };
 
 const getName = async (jid) => {
+  if (!jid) {
+    console.log("Invalid JID:", jid);
+    return null;
+  }
+  
   const contact = await contactDb.findOne({ where: { jid } });
-  if (!contact) return jid.split("@")[0].replace(/_/g, " ");
+  if (!contact) {
+    console.log("Contact not found for JID:", jid);
+    return jid.split("@")[0].replace(/_/g, " ");
+  }
+  
+  console.log("Found contact name for JID:", jid, "Name:", contact.name);
   return contact.name;
 };
+
 module.exports = {
   saveMessage,
   loadMessage,
