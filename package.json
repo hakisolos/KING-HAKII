@@ -1,6 +1,6 @@
 {
   "name": "x-asena",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "description": "Whatsapp Bot",
   "main": "index.js",
   "directories": {
@@ -10,8 +10,7 @@
     "@adiwajshing/keyed-db": "^0.2.4",
     "@google/generative-ai": "^0.5.0",
     "@neeraj-x0/ytsearch": "^1.0.0",
-    "@whiskeysockets/baileys": "^6.7.8",
-    "axios": "^1.4.0",
+    "axios": "^1.7.7",
     "baileys": "github:X-Electra/baileys",
     "bitly": "^4.1.1",
     "browser-id3-writer": "^4.4.0",
@@ -42,7 +41,6 @@
   },
   "scripts": {
     "start": "pm2 start index.js --name x-asena && pm2 logs x-asena",
-    "stop": "pm2 stop x-asena",
     "code": "node lib/pcode.js"
   },
   "repository": {
