@@ -109,3 +109,28 @@ command(
     }
   }
 );
+
+command(
+  {
+    pattern: ">",
+    type: "tools",
+    fromMe: true,
+    desc: "Runs js code on node server."
+    //dontAddCommandList: true,
+  },
+  async (message, match, m) => {
+    try {
+      if (!match) {
+        return message.reply("*Provide A Query.");
+      }
+      let evaled = eval("const a = async()=>{\n" + match + "\n}\na()");
+      if (typeof evaled === "object") {
+        await message.reply(JSON.stringify(evaled));
+      } else {
+        await _0x5a9ab6.reply(evaled.toString());
+      }
+    } catch (error) {
+      return await message.reply(_error.toString());
+    }
+  }
+);
